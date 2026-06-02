@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useCart } from "@/context/CartContext"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ShoppingCart, Trash2, Store, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
 
 interface Product {
@@ -58,6 +59,21 @@ function ImageMagnifier({ src, alt }: { src: string; alt: string }) {
         }} />
       )}
     </div>
+  )
+}
+
+// 💀 SKELETON CARD COMPONENT (તમે આપેલો કમ્પોનન્ટ)
+export function SkeletonCard() {
+  return (
+    <Card className="w-full">
+      <CardHeader className="p-3">
+        <Skeleton className="h-4 w-2/3 mb-1" />
+        <Skeleton className="h-4 w-1/2" />
+      </CardHeader>
+      <CardContent className="p-3 pt-0">
+        <Skeleton className="aspect-square w-full rounded-md" />
+      </CardContent>
+    </Card>
   )
 }
 
@@ -118,14 +134,57 @@ export default function ProductDetailPage() {
     return () => clearInterval(interval)
   }, [product])
 
+  // 🛠️ NEW SKELETON LOADING STATE
   if (!product) {
-    return <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">Loading dynamic product records...</div>
+    return (
+      <div className="min-h-screen bg-gray-50/50">
+        <header className="sticky top-0 z-40 w-full border-b bg-white p-4 shadow-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="text-xl font-bold text-gray-900">🏙️ <span className="text-blue-600">Next</span>Market</div>
+            <Skeleton className="h-9 w-24 rounded-lg" />
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <Skeleton className="h-5 w-36 mb-6" />
+
+          {/* Main Product Skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 shadow-sm">
+            <div className="w-full md:w-1/2">
+              <Skeleton className="h-80 md:h-[450px] w-full rounded-xl" />
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col justify-between py-2">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-10 w-1/3" />
+                <hr className="border-gray-100" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-12 w-full rounded-lg" />
+              </div>
+              <Skeleton className="h-12 w-full rounded-xl mt-6" />
+            </div>
+          </div>
+
+          {/* Related Products Skeleton */}
+          <div className="mt-16">
+            <Skeleton className="h-7 w-64 mb-6 border-b pb-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <SkeletonCard key={idx} />
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
 
-  // 🗂️ 3. RELATED PRODUCTS LOGIC (સેમ કેટેગરીના પ્રોડક્ટ્સ ફિલ્ટર કરવા)
+  // 🗂️ 3. RELATED PRODUCTS LOGIC
   const relatedProducts = allProducts.filter(
     p => p.category === product.category && p.productId !== product.productId
-  ).slice(0, 6) // વધુમાં વધુ 6 પ્રોડક્ટ્સ સજેસ્ટ કરશે
+  ).slice(0, 6)
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -194,7 +253,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* 🗂️ 4. RELATED PRODUCTS SECTION (સમાન કેટેગરીના અન્ય પ્રોડક્ટ્સ) */}
+        {/* 🗂️ 4. RELATED PRODUCTS SECTION */}
         {relatedProducts.length > 0 && (
           <div className="mt-16">
             <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3 border-gray-100">Customers Also Viewed (Same Category)</h3>
