@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/CartContext"
 import { ShoppingCart } from "lucide-react"
+import { toast } from "sonner"
+
 
 interface ProductCardProps {
   productId: string
@@ -31,8 +33,15 @@ export function ProductCard({ productId, title, price, imageUrl, inventoryQty, s
       sellerId,
       image: imageUrl || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600'
     })
-    alert("Item added to cart! 🛒")
-  }
+toast.success("Item added to cart", {
+style: {
+    background: "#16a34a",
+    color: "#fff",
+    border: "1px solid #15803d",
+  },
+  position: "top-right",
+  
+})  }
 
   return (
     <Card className="bg-white border rounded-xl p-3 shadow-none transition-all flex flex-col justify-between h-full group">
