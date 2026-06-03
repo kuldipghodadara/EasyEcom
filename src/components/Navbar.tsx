@@ -37,7 +37,7 @@ export function Navbar({ onCategorySelect, onSearch }: NavbarProps) {
   useEffect(() => {
     async function fetchAllProducts() {
       try {
-        const res = await fetch("http://localhost:5000/api/products");
+        const res = await fetch("https://easyecomserver.vercel.app/api/products");
         const data = await res.json();
         if (data.success) {
           setAllProducts(data.products);

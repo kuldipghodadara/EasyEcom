@@ -133,7 +133,7 @@ export default function ProductDetailPage() {
         setLoading(true);
 
         const productRes = await fetch(
-          `http://localhost:5000/api/products/${id}`
+          `https://easyecomserver.vercel.app/api/products/${id}`
         );
 
         const productData =
@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
         }
 
         const allRes = await fetch(
-          "http://localhost:5000/api/products"
+          "https://easyecomserver.vercel.app/api/products"
         );
 
         const allData = await allRes.json();
