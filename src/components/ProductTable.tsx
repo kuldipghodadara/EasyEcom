@@ -27,7 +27,7 @@ export function ProductTable({ products, onRefresh }: { products: Product[]; onR
       body: JSON.stringify({ inventoryQty: newStock })
     });
     setEditingId(null);
-    onRefresh();
+    // onRefresh();
   };
 
   const handleDelete = async (id: string) => {
