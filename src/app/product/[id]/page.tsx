@@ -1,282 +1,438 @@
-"use client"
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import { useCart } from "@/context/CartContext"
-import { Badge } from "@/components/ui/badge"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { ShoppingCart, Trash2, Store, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { ProductCard } from "@/components/ProductCard";
+import { useCart } from "@/context/CartContext";
+
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import {
+  ArrowLeft,
+  ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  Shield,
+  Truck,
+} from "lucide-react";
 
 interface Product {
-  productId: string
-  title: string
-  description: string
-  price: number
-  originalPrice?: number
-  category: string
-  inventoryQty: number
-  images: string[]
-  sellerId: string
+  productId: string;
+  title: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  inventoryQty: number;
+  images: string[];
+  sellerId: string;
 }
 
-// 🔍 IMAGE MAGNIFIER COMPONENT
-function ImageMagnifier({ src, alt }: { src: string; alt: string }) {
-  const [[x, y], setXY] = useState([0, 0])
-  const [[imgWidth, imgHeight], setSize] = useState([0, 0])
-  const [showMagnifier, setShowMagnifier] = useState(false)
+function ImageMagnifier({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [[x, y], setXY] = useState([0, 0]);
+  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+  const [showMagnifier, setShowMagnifier] = useState(false);
 
   return (
-    <div className="relative h-80 md:h-[450px] w-full bg-white rounded-xl overflow-hidden flex items-center justify-center border border-gray-100 shadow-sm">
+    <div className="relative bg-white rounded-2xl border overflow-hidden h-[420px] flex items-center justify-center">
       <img
         src={src}
-        className="max-h-full max-w-full object-contain cursor-zoom-in"
         alt={alt}
+        className="max-h-full max-w-full object-contain cursor-zoom-in"
         onMouseEnter={(e) => {
-          const elem = e.currentTarget
-          const { width, height } = elem.getBoundingClientRect()
-          setSize([width, height])
-          setShowMagnifier(true)
+          const elem = e.currentTarget;
+          const { width, height } =
+            elem.getBoundingClientRect();
+          setSize([width, height]);
+          setShowMagnifier(true);
         }}
         onMouseMove={(e) => {
-          const elem = e.currentTarget
-          const { top, left } = elem.getBoundingClientRect()
-          const x = e.pageX - left - window.scrollX
-          const y = e.pageY - top - window.scrollY
-          setXY([x, y])
+          const elem = e.currentTarget;
+          const { top, left } =
+            elem.getBoundingClientRect();
+
+          const x =
+            e.pageX - left - window.scrollX;
+          const y =
+            e.pageY - top - window.scrollY;
+
+          setXY([x, y]);
         }}
-        onMouseLeave={() => setShowMagnifier(false)}
+        onMouseLeave={() =>
+          setShowMagnifier(false)
+        }
       />
+
       {showMagnifier && (
-        <div style={{
-          position: "absolute", pointerEvents: "none", height: "180px", width: "180px",
-          top: `${y - 90}px`, left: `${x - 90}px`, border: "2px solid #3b82f6", borderRadius: "50%",
-          backgroundColor: "white", backgroundImage: `url('${src}')`, backgroundRepeat: "no-repeat",
-          backgroundSize: `${imgWidth * 2.5}px ${imgHeight * 2.5}px`,
-          backgroundPosition: `${-x * 2.5 + 90}px ${-y * 2.5 + 90}px`,
-          boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
-        }} />
+        <div
+          style={{
+            position: "absolute",
+            pointerEvents: "none",
+            width: "180px",
+            height: "180px",
+            top: `${y - 90}px`,
+            left: `${x - 90}px`,
+            border: "2px solid #2563eb",
+            borderRadius: "50%",
+            backgroundImage: `url('${src}')`,
+            backgroundRepeat: "no-repeat",
+            backgroundColor: "white",
+            backgroundSize: `${imgWidth * 2.5}px ${
+              imgHeight * 2.5
+            }px`,
+            backgroundPosition: `${
+              -x * 2.5 + 90
+            }px ${-y * 2.5 + 90}px`,
+            zIndex: 30,
+            boxShadow:
+              "0 15px 35px rgba(0,0,0,.15)",
+          }}
+        />
       )}
     </div>
-  )
-}
-
-// 💀 SKELETON CARD COMPONENT (તમે આપેલો કમ્પોનન્ટ)
-export function SkeletonCard() {
-  return (
-    <Card className="w-full">
-      <CardHeader className="p-3">
-        <Skeleton className="h-4 w-2/3 mb-1" />
-        <Skeleton className="h-4 w-1/2" />
-      </CardHeader>
-      <CardContent className="p-3 pt-0">
-        <Skeleton className="aspect-square w-full rounded-md" />
-      </CardContent>
-    </Card>
-  )
+  );
 }
 
 export default function ProductDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { id } = params
-  
-  const { cart, addToCart, removeFromCart, getCartTotal } = useCart()
-  const [allProducts, setAllProducts] = useState<Product[]>([])
-  const [product, setProduct] = useState<Product | null>(null)
-  const [activeImgIndex, setActiveImgIndex] = useState<number>(0)
+  const params = useParams();
+  const router = useRouter();
+  const { addToCart } = useCart();
 
-  const totalCartCount = cart.reduce((acc, item) => acc + item.qty, 0)
+  const { id } = params;
 
-  // 🔄 ડેટાબેઝ સિન્ક્રોનાઇઝેશન
+  const [product, setProduct] =
+    useState<Product | null>(null);
+
+  const [allProducts, setAllProducts] =
+    useState<Product[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [activeImgIndex, setActiveImgIndex] =
+    useState(0);
+
   useEffect(() => {
-    async function loadData() {
-      let productList: Product[] = []
+    async function loadProduct() {
       try {
-        const res = await fetch('http://localhost:5000/api/products')
-        const data = await res.json()
-        if (data.success) productList = data.products
+        setLoading(true);
+
+        const productRes = await fetch(
+          `http://localhost:5000/api/products/${id}`
+        );
+
+        const productData =
+          await productRes.json();
+
+        if (productData.success) {
+          setProduct(productData.product);
+        }
+
+        const allRes = await fetch(
+          "http://localhost:5000/api/products"
+        );
+
+        const allData = await allRes.json();
+
+        if (allData.success) {
+          setAllProducts(allData.products);
+        }
       } catch (err) {
-        // ફોલબેક મોક સ્ટોરેજ એરે (કેટેગરી મેપિંગ સાથે)
-        productList = Array.from({ length: 20 }, (_, index) => {
-          const categories = ["Audio", "Wearables", "Computing", "Gaming"]
-          const cat = categories[index % categories.length]
-          return {
-            productId: `PROD-${100 + index}`,
-            title: `${cat} Premium Device Model X-${index + 1}`,
-            description: "This is a full core descriptive brief setup regarding the listed seller inventory item. High build profiles with deep warranty cards included.",
-            price: 499 + (index * 120),
-            originalPrice: 799 + (index * 120),
-            category: cat,
-            inventoryQty: 30,
-            images: [
-              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
-              'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80'
-            ],
-            sellerId: `SEL-${800 + index}`
-          }
-        })
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setAllProducts(productList)
-      const found = productList.find(p => p.productId === id)
-      setProduct(found || null)
     }
-    loadData()
-  }, [id])
 
-  // 🔄 AUTO SLIDER ENGINE
-  useEffect(() => {
-    if (!product || product.images.length <= 1) return
-    const interval = setInterval(() => {
-      setActiveImgIndex(prev => (prev === product.images.length - 1 ? 0 : prev + 1))
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [product])
+    if (id) loadProduct();
+  }, [id]);
 
-  // 🛠️ NEW SKELETON LOADING STATE
-  if (!product) {
+  if (loading || !product) {
     return (
-      <div className="min-h-screen bg-gray-50/50">
-        <header className="sticky top-0 z-40 w-full border-b bg-white p-4 shadow-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="text-xl font-bold text-gray-900">🏙️ <span className="text-blue-600">Next</span>Market</div>
-            <Skeleton className="h-9 w-24 rounded-lg" />
-          </div>
-        </header>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
 
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          <Skeleton className="h-5 w-36 mb-6" />
+        <main className="max-w-7xl mx-auto w-full px-4 py-8 flex-1">
+          <div className="grid md:grid-cols-2 gap-8">
+            <Skeleton className="h-[500px] rounded-2xl" />
 
-          {/* Main Product Skeleton */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 shadow-sm">
-            <div className="w-full md:w-1/2">
-              <Skeleton className="h-80 md:h-[450px] w-full rounded-xl" />
-            </div>
-            <div className="w-full md:w-1/2 flex flex-col justify-between py-2">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-20 rounded-full" />
-                <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-10 w-1/3" />
-                <hr className="border-gray-100" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-12 w-full rounded-lg" />
-              </div>
-              <Skeleton className="h-12 w-full rounded-xl mt-6" />
-            </div>
-          </div>
-
-          {/* Related Products Skeleton */}
-          <div className="mt-16">
-            <Skeleton className="h-7 w-64 mb-6 border-b pb-3" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <SkeletonCard key={idx} />
-              ))}
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="h-32 w-full" />
             </div>
           </div>
         </main>
+
+        <Footer />
       </div>
-    )
+    );
   }
 
-  // 🗂️ 3. RELATED PRODUCTS LOGIC
-  const relatedProducts = allProducts.filter(
-    p => p.category === product.category && p.productId !== product.productId
-  ).slice(0, 6)
+  const relatedProducts = allProducts
+    .filter(
+      (p) =>
+        p.category === product.category &&
+        p.productId !== product.productId
+    )
+    .slice(0, 5);
+
+  const currentImage =
+    product.images?.[activeImgIndex] ||
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800";
+
+  const handleAddToCart = () => {
+    if (product.inventoryQty <= 0) return;
+
+    addToCart({
+      productId: product.productId,
+      title: product.title,
+      price: product.price,
+      qty: 1,
+      sellerId: product.sellerId,
+      image: currentImage,
+    });
+
+    alert("Item added to cart 🛒");
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    router.push("/checkout");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-white p-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-gray-900">🏙️ <span className="text-blue-600">Next</span>Market</Link>
-          <div className="flex items-center gap-4">
-            <Sheet>
-              <SheetTrigger className="inline-flex items-center justify-center rounded-lg text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent h-9 px-4 py-2 relative gap-2 cursor-pointer">
-                <ShoppingCart className="h-4 w-4" /> Cart
-                {totalCartCount > 0 && <Badge className="ml-1 bg-blue-600 text-white">{totalCartCount}</Badge>}
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader><SheetTitle>Your Shopping Cart</SheetTitle></SheetHeader>
-                {cart.length === 0 ? <div className="text-center py-20 text-gray-500">Cart is empty</div> : (
-                  <div className="flex flex-col h-full justify-between pb-6">
-                    <div className="overflow-y-auto space-y-4 my-4 max-h-[70vh]">
-                      {cart.map(item => (
-                        <div key={item.productId} className="flex justify-between items-center border-b pb-2">
-                          <div><p className="font-medium text-sm">{item.title}</p><p className="text-xs text-gray-500">₹{item.price} × {item.qty}</p></div>
-                          <button onClick={() => removeFromCart(item.productId)} className="text-red-500"><Trash2 className="h-4 w-4" /></button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pt-4 border-t"><div className="flex justify-between font-bold mb-4"><span>Total:</span><span>₹{getCartTotal()}</span></div>
-                    <Link href="/checkout" className="w-full block"><button className="w-full bg-blue-600 text-white h-10 rounded-lg">Checkout</button></Link></div>
-                  </div>
-                )}
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <button onClick={() => router.push('/')} className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 cursor-pointer font-medium">
-          <ArrowLeft className="h-4 w-4" /> Back to Storefront
+      <main className="max-w-7xl mx-auto w-full px-4 py-8 flex-1">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm font-medium mb-6 hover:text-blue-600 cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
         </button>
 
-        {/* Product core detail showcase row */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row gap-8 shadow-sm">
-          {/* Left: Slider with arrows */}
-          <div className="w-full md:w-1/2 relative group">
-            <ImageMagnifier src={product.images[activeImgIndex]} alt={product.title} />
-            {product.images.length > 1 && (
-              <>
-                <button onClick={() => setActiveImgIndex(prev => prev === 0 ? product.images.length - 1 : prev - 1)} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow border cursor-pointer"><ChevronLeft className="h-5 w-5" /></button>
-                <button onClick={() => setActiveImgIndex(prev => prev === product.images.length - 1 ? 0 : prev + 1)} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow border cursor-pointer"><ChevronRight className="h-5 w-5" /></button>
-              </>
-            )}
-          </div>
+        <Card className="overflow-hidden bg-white shadow-lg border-0">
+          <CardContent className="p-6 md:p-8">
+            <div className="grid lg:grid-cols-2 gap-10">
+              {/* LEFT */}
+              <div>
+                <div className="relative group">
+                  <ImageMagnifier
+                    src={currentImage}
+                    alt={product.title}
+                  />
 
-          {/* Right: Info Sheets */}
-          <div className="w-full md:w-1/2 flex flex-col justify-between">
-            <div className="space-y-4">
-              <span className="inline-block text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{product.category}</span>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
-              <div className="flex items-baseline gap-3"><span className="text-3xl font-extrabold text-gray-950">₹{product.price}</span>{product.originalPrice && <span className="text-gray-400 line-through text-lg">₹{product.originalPrice}</span>}</div>
-              <hr className="border-gray-100" />
-              <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
-              <div className="text-xs text-gray-400 bg-gray-50 p-3 rounded-lg border">📍 Seller Node ID Reference: <span className="font-mono font-bold">{product.sellerId}</span></div>
-            </div>
-            <button onClick={() => addToCart({ productId: product.productId, title: product.title, price: product.price, qty: 1, sellerId: product.sellerId, image: product.images[0] })} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 rounded-xl mt-6 transition shadow cursor-pointer">Add to Shopping Cart</button>
-          </div>
-        </div>
+                  {product.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          setActiveImgIndex((prev) =>
+                            prev === 0
+                              ? product.images.length -
+                                1
+                              : prev - 1
+                          )
+                        }
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white border rounded-full p-2 shadow opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
 
-        {/* 🗂️ 4. RELATED PRODUCTS SECTION */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3 border-gray-100">Customers Also Viewed (Same Category)</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {relatedProducts.map(p => (
-                <Card 
-                  key={p.productId} 
-                  onClick={() => { router.push(`/product/${p.productId}`); setActiveImgIndex(0); }}
-                  className="bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md shadow-none transition-all flex flex-col justify-between"
+                      <button
+                        onClick={() =>
+                          setActiveImgIndex((prev) =>
+                            prev ===
+                            product.images.length - 1
+                              ? 0
+                              : prev + 1
+                          )
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white border rounded-full p-2 shadow opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Thumbnails */}
+                {product.images?.length > 1 && (
+                  <div className="flex gap-3 mt-4 overflow-x-auto">
+                    {product.images.map(
+                      (img, index) => (
+                        <button
+                          key={index}
+                          onClick={() =>
+                            setActiveImgIndex(index)
+                          }
+                          className={`h-20 w-20 rounded-xl overflow-hidden border-2 shrink-0 ${
+                            activeImgIndex === index
+                              ? "border-blue-600"
+                              : "border-gray-200"
+                          }`}
+                        >
+                          <img
+                            src={img}
+                            className="h-full w-full object-cover"
+                            alt=""
+                          />
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT */}
+              <div className="space-y-6">
+                <Badge variant="secondary">
+                  {product.category}
+                </Badge>
+
+                <h1 className="text-4xl font-bold leading-tight">
+                  {product.title}
+                </h1>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl font-bold">
+                    ₹{product.price}
+                  </span>
+
+                  {product.originalPrice && (
+                    <span className="line-through text-gray-400">
+                      ₹{product.originalPrice}
+                    </span>
+                  )}
+                </div>
+
+                <Badge
+                  variant={
+                    product.inventoryQty > 0
+                      ? "default"
+                      : "destructive"
+                  }
                 >
-                  <div className="aspect-square bg-gray-50 rounded overflow-hidden mb-2 flex items-center justify-center">
-                    <img src={p.images[0]} alt={p.title} className="max-h-full object-contain p-1" />
+                  {product.inventoryQty > 0
+                    ? `${product.inventoryQty} In Stock`
+                    : "Out Of Stock"}
+                </Badge>
+
+                <p className="text-gray-600 leading-7">
+                  {product.description}
+                </p>
+
+                {/* Features */}
+                <div className="grid gap-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
+                    <Truck className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm">
+                      Fast Delivery Available
+                    </span>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-800 line-clamp-2 h-8 mb-1">{p.title}</h4>
-                    <p className="text-sm font-bold text-gray-950">₹{p.price}</p>
+
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <span className="text-sm">
+                      Secure Checkout
+                    </span>
                   </div>
-                </Card>
+
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
+                    <Zap className="h-5 w-5 text-yellow-600" />
+                    <span className="text-sm">
+                      Quality Assured Product
+                    </span>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Button
+                    size="lg"
+                    onClick={handleAddToCart}
+                    disabled={
+                      product.inventoryQty <= 0
+                    }
+                    className="h-12"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add To Cart
+                  </Button>
+
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleBuyNow}
+                    disabled={
+                      product.inventoryQty <= 0
+                    }
+                    className="h-12"
+                  >
+                    Buy Now
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Description Section */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-bold mb-4">
+              Product Description
+            </h2>
+
+            <p className="text-gray-600 leading-7">
+              {product.description}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <section className="mt-14">
+            <h2 className="text-2xl font-bold mb-6">
+              Related Products
+            </h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {relatedProducts.map((p) => (
+                <ProductCard
+                  key={p.productId}
+                  productId={p.productId}
+                  title={p.title}
+                  price={p.price}
+                  imageUrl={p.images?.[0]}
+                  inventoryQty={p.inventoryQty}
+                  sellerId={p.sellerId}
+                />
               ))}
             </div>
-          </div>
+          </section>
         )}
       </main>
+
+      <Footer />
     </div>
-  )
+  );
 }
