@@ -9,17 +9,19 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: '20mb' })); 
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-// Initialize Firebase Admin
-try {
-  const serviceAccount = require('./firebase-service-account.json');
+let serviceAccount;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  serviceAccount = require('./firebase-service-account.json');
+}
+
+if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
-  console.log("✅ Firebase Admin SDK Initialized Successfully");
-} catch (err) {
-  console.error("❌ Firebase Initialization Failed:", err.message);
 }
-
 const db = admin.firestore();
 const auth = admin.auth();
 
@@ -129,5 +131,13 @@ app.delete('/api/products/:id', async (req, res) => {
   } catch (error) { return res.status(500).json({ success: false, error: error.message }); }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`🚀 Central Server running on http://localhost:${PORT}`));
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Central Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
