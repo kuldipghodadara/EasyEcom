@@ -23,6 +23,9 @@ import {
   Zap,
   Shield,
   Truck,
+  Box,
+  Hash,
+  Percent,
 } from "lucide-react";
 
 interface Product {
@@ -35,6 +38,9 @@ interface Product {
   inventoryQty: number;
   images: string[];
   sellerId: string;
+  cartonQty?: number;
+  hsnCode?: string;
+  gstPercentage?: number;
 }
 
 function ImageMagnifier({
@@ -279,23 +285,23 @@ export default function ProductDetailPage() {
                   <div className="flex gap-3 mt-4 overflow-x-auto">
                     {product.images.map(
                       (img, index) => (
-                        <button
-                          key={index}
+                      <button
+                        key={index}
                           onClick={() =>
                             setActiveImgIndex(index)
                           }
-                          className={`h-20 w-20 rounded-xl overflow-hidden border-2 shrink-0 ${
+                        className={`h-20 w-20 rounded-xl overflow-hidden border-2 shrink-0 ${
                             activeImgIndex === index
                               ? "border-blue-600"
                               : "border-gray-200"
-                          }`}
-                        >
+                        }`}
+                      >
                           <img
                             src={img}
                             className="h-full w-full object-cover"
                             alt=""
                           />
-                        </button>
+                      </button>
                       )
                     )}
                   </div>
@@ -336,9 +342,31 @@ export default function ProductDetailPage() {
                     : "Out Of Stock"}
                 </Badge>
 
-                <p className="text-gray-600 leading-7">
-                  {product.description}
-                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <Box className="h-4 w-4 text-blue-600 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Carton Qty</span>
+                      <span className="text-xs font-bold text-slate-800">{product.cartonQty || "0"} Pcs</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 border-t sm:border-t-0 sm:border-x border-slate-200 pt-2 sm:pt-0 sm:px-3">
+                    <Hash className="h-4 w-4 text-purple-600 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">HSN Code</span>
+                      <span className="text-xs font-bold text-slate-800">{product.hsnCode || "N/A"}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 border-t sm:border-t-0 pt-2 sm:pt-0 sm:pl-1">
+                    <Percent className="h-4 w-4 text-green-600 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">GST</span>
+                      <span className="text-xs font-bold text-slate-800">{product.gstPercentage || "0"}% Included</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 leading-7">{product.description}</p>
 
                 {/* Features */}
                 <div className="grid gap-3">
@@ -358,9 +386,7 @@ export default function ProductDetailPage() {
 
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-100">
                     <Zap className="h-5 w-5 text-yellow-600" />
-                    <span className="text-sm">
-                      Quality Assured Product
-                    </span>
+                    <span className="text-sm">Quality Assured Product</span>
                   </div>
                 </div>
 
@@ -369,10 +395,8 @@ export default function ProductDetailPage() {
                   <Button
                     size="lg"
                     onClick={handleAddToCart}
-                    disabled={
-                      product.inventoryQty <= 0
-                    }
-                    className="h-12"
+                    disabled={product.inventoryQty <= 0}
+                    className="h-12 cursor-pointer"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Add To Cart
@@ -382,10 +406,8 @@ export default function ProductDetailPage() {
                     size="lg"
                     variant="outline"
                     onClick={handleBuyNow}
-                    disabled={
-                      product.inventoryQty <= 0
-                    }
-                    className="h-12"
+                    disabled={product.inventoryQty <= 0}
+                    className="h-12 cursor-pointer"
                   >
                     Buy Now
                   </Button>
