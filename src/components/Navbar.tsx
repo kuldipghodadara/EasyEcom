@@ -145,34 +145,51 @@ export function Navbar({ onCategorySelect, onSearch }: NavbarProps) {
           />
 
           {/* 🏪 LIVE DROPDOWN POPUP BLOCK */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-white border border-gray-100 rounded-xl shadow-xl mt-1.5 py-2 z-50 max-h-[380px] overflow-y-auto animate-in fade-in duration-100">
-              {suggestions.map((p) => (
-                <div
-                  key={p.productId}
-                  onClick={() => {
-                    router.push(`/product/${p.productId}`); // ક્લિક કરતાં જ પ્રોડક્ટ પેજ ખુલશે
-                    setShowSuggestions(false);
-                    setSearchTerm("");
-                  }}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
-                >
-                  {/* પ્રોડક્ટ ઈમેજ */}
-                  <div className="h-10 w-10 shrink-0 bg-slate-50 rounded-md border border-gray-100 p-1 flex items-center justify-center">
-                    <img src={p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'} alt="" className="max-h-full max-w-full object-contain" />
-                  </div>
-                  
-                  {/* પ્રોડક્ટ નામ અને કેટેગરી */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{p.title}</p>
-                    {p.category && (
-                      <p className="text-xs text-blue-500 font-semibold mt-0.5">in {p.category}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {showSuggestions && searchTerm.trim().length > 0 &&  (
+  <div className="absolute top-full left-0 w-full bg-white border border-gray-100 rounded-xl shadow-xl mt-1.5 py-2 z-50 max-h-[380px] overflow-y-auto animate-in fade-in duration-100">
+    
+    {suggestions.length > 0 ? (
+      suggestions.map((p) => (
+        <div
+          key={p.productId}
+          onClick={() => {
+            router.push(`/product/${p.productId}`);
+            setShowSuggestions(false);
+            setSearchTerm("");
+          }}
+          className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors"
+        >
+          <div className="h-10 w-10 shrink-0 bg-slate-50 rounded-md border border-gray-100 p-1 flex items-center justify-center">
+            <img
+              src={
+                p.images?.[0] ||
+                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100"
+              }
+              alt=""
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-800 truncate">
+              {p.title}
+            </p>
+            {p.category && (
+              <p className="text-xs text-blue-500 font-semibold mt-0.5">
+                in {p.category}
+              </p>
+            )}
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="px-4 py-6 text-center text-sm text-gray-500">
+        No products found
+      </div>
+    )}
+    
+  </div>
+)}
         </div>
 
         {/* DESKTOP NAVIGATION */}
